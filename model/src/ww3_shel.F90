@@ -308,6 +308,10 @@ PROGRAM W3SHEL
 #ifdef W3_OMPG
   USE OMP_LIB
 #endif
+#ifdef W3_MPI
+  USE MPICOMM
+#endif
+  !
   IMPLICIT NONE
   !
 #ifdef W3_MPI
@@ -487,7 +491,7 @@ PROGRAM W3SHEL
 #endif
 
 #ifdef W3_MPI
-    MPI_COMM = MPI_COMM_WORLD
+    MPI_COMM = MPI_COMM_WW3
 #endif
 #ifdef W3_OASIS
   END IF

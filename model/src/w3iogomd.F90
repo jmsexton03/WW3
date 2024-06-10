@@ -858,6 +858,7 @@ CONTAINS
     CASE('HS')
       I = 2
       J = 1
+
     CASE('LM')
       I = 2
       J = 2
@@ -1324,6 +1325,8 @@ CONTAINS
     !/
     REAL, INTENT(IN)        :: A(NTH,NK,0:NSEAL)
     LOGICAL, INTENT(IN)     :: FLPART, FLOUTG, FLOUTG2
+    ! MY EDITS 
+    INTEGER :: COUNTER
     !/
     !/ ------------------------------------------------------------------- /
     !/ Local parameters
@@ -1374,6 +1377,7 @@ CONTAINS
     !/
     !/ ------------------------------------------------------------------- /
     !/
+
 #ifdef W3_S
     CALL STRACE (IENT, 'W3OUTG')
 #endif
@@ -1995,6 +1999,7 @@ CONTAINS
         IF ( ET(JSEA) .GE. 0. ) THEN
 #endif
           HS (JSEA) = 4. * SQRT ( ET(JSEA) )
+
 #ifdef W3_O9
         ELSE
           HS (JSEA) = - 4. * SQRT ( -ET(JSEA) )
@@ -2065,6 +2070,33 @@ CONTAINS
       END IF
     END DO
 #endif
+    ! MY EDITS
+    ! MOVE LOOP HERE
+    OPEN(2120, file='output_HS.txt', status='replace', action="write")
+
+    ! Write HS values to the new file
+    DO JSEA=1, NSEAL
+        CALL INIT_GET_ISEA(ISEA, JSEA)
+        IX     = MAPSF(ISEA,1)
+        IY     = MAPSF(ISEA,2)
+   
+        WRITE(2120, *) "(", IX, IY, ")", HS(ISEA)
+    END DO
+    CLOSE(2120)
+
+    ! 
+    OPEN(2121, file='output_LM.txt', status='replace', action="write")
+    ! Write LM values to the new file
+    DO JSEA=1, NSEAL
+        CALL INIT_GET_ISEA(ISEA, JSEA)
+        IX     = MAPSF(ISEA,1)
+        IY     = MAPSF(ISEA,2)
+
+        WRITE(2121, *) "(", IX, IY, ")", WLM(ISEA)
+    END DO
+    CLOSE(2121)
+
+
     !
     ! 4.  Peak frequencies and directions -------------------------------- *
     ! 4.a Initialize
@@ -2232,7 +2264,8 @@ CONTAINS
         WRITE (NDST,9054) ISEA, IX, IY, HS(JSEA), WLM(JSEA),   &
              T0M1(JSEA), RADE*THM(JSEA), THS(JSEA), FP0(JSEA),&
              THP0(JSEA)
-      END IF
+      END IF 
+    
     END DO
 #endif
     !
@@ -2356,6 +2389,7 @@ CONTAINS
     END IF
     
     !
+
     ! Dominant wave breaking probability
     !
     IF (FLOLOC(2, 17)) CALL CALC_WBT(A)
@@ -2713,6 +2747,7 @@ CONTAINS
       !
       ! Create TIMETAG for file name using YYYYMMDD.HHMMS prefix
       WRITE(TIMETAG,"(i8.8,'.'i6.6)")TIME(1),TIME(2)
+
 #ifdef W3_T
       WRITE (NDST,9001) FNMPRE(:J)//TIMETAG//'.out_grd.'//FILEXT(:I)
 #endif
@@ -2780,6 +2815,7 @@ CONTAINS
     !
     ! TIME and flags ----------------------------------------------------- *
     !
+
     IF ( WRITE ) THEN
       WRITE (NDSOG)                            TIME, FLOGRD
 #ifdef W3_ASCII

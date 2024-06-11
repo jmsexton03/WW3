@@ -4,6 +4,7 @@
 !> @author H. L. Tolman @date 22-Mar-2021
 !
 #include "w3macros.h"
+#define W3_MPMD
 
 !/ ------------------------------------------------------------------- /
 !> @brief A generic shell for WAVEWATCH III, using preformatted
@@ -308,9 +309,9 @@ PROGRAM W3SHEL
 #ifdef W3_OMPG
   USE OMP_LIB
 #endif
-#ifdef W3_MPI
+
   USE MPICOMM
-#endif
+
   !
   IMPLICIT NONE
   !
@@ -400,6 +401,12 @@ PROGRAM W3SHEL
   LOGICAL             :: L_MASTER
   LOGICAL             :: FIRST_STEP = .TRUE.
 #endif
+#ifdef W3_MPMD
+  LOGICAL             :: FIRST_STEP = .TRUE.
+  integer             :: flag
+  integer             :: p, all_appnum(10), napps, all_argc(10)
+  CHARACTER(LEN=80)   :: exename
+#endif
   character(len=10)   :: jchar
   integer             :: memunit
   !
@@ -472,6 +479,7 @@ PROGRAM W3SHEL
   FLHYBR = .TRUE.
 #endif
 
+#ifndef W3_MPMD
 #ifdef W3_OASIS
   IF (OASISED.EQ.1) THEN
     CALL CPL_OASIS_INIT(MPI_COMM)
@@ -495,6 +503,16 @@ PROGRAM W3SHEL
 #endif
 #ifdef W3_OASIS
   END IF
+#endif
+#else
+  
+  IS_EXTERNAL_COMPONENT = .TRUE.
+  print*, "CHANGING MPI COMM"
+  ! CHANGE HERE
+!!  MPI_COMM_WW3 = 5
+#ifdef W3_MPI
+    MPI_COMM = MPI_COMM_WW3
+#endif
 #endif
   !
   !
@@ -1687,7 +1705,6 @@ PROGRAM W3SHEL
   ! 2.1 input fields
 
   ! 2.1.a Opening field and data files
-
   IF ( IAPROC .EQ. NAPOUT ) WRITE (NDSO,950)
   IF ( FLFLG ) THEN
     IF ( IAPROC .EQ. NAPOUT ) WRITE (NDSO,951)                  &
@@ -1920,6 +1937,7 @@ PROGRAM W3SHEL
   CALL W3INIT ( 1, .FALSE., 'ww3', NDS, NTRACE, ODAT, FLGRD, FLGR2, FLGD,    &
        FLG2, NPTS, X, Y, PNAMES, IPRT, PRTFRM, MPI_COMM,   &
        FLAGSTIDEIN=FLAGSTIDE )
+
   !
   !      IF (MINVAL(VA) .LT. 0.) THEN
   !        WRITE(740+IAPROC,*) 'NEGATIVE ACTION SHELL 5', MINVAL(VA)

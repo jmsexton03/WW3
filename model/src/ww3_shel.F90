@@ -407,7 +407,7 @@ PROGRAM W3SHEL
 #ifdef W3_MPMD
   LOGICAL             :: FIRST_STEP = .TRUE., initialized, mpi_initialized_by_us
   integer             :: flag, myproc, nprocs, max_appnum, min_appnum, this_root, other_root, rank_offset, this_nboxes
-  integer             :: p, appnum, all_appnum(10), napps, all_argc(10)
+  integer             :: p, appnum, all_appnum(10), napps, all_argc(10), end_flag
   CHARACTER(LEN=80)   :: exename
 #endif
   character(len=10)   :: jchar
@@ -2861,7 +2861,18 @@ print*, FLGNML, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #endif
 #ifdef W3_MPI
 #ifdef W3_MPMD
-!     CALL MPI_BARRIER(MPI_COMM_WORLD, IERR_MPI)
+#if 0
+     END_FLAG=-1
+     if (MyProc-1 .eq. this_root) then
+        if (rank_offset .eq. 0) then !  the first program
+           CALL MPI_Send(END_FLAG, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
+        else ! the second program
+           CALL MPI_Send(END_FLAG, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
+        end if
+     end if
+#endif
+
+     CALL MPI_BARRIER(MPI_COMM_WORLD, IERR_MPI)
      CALL MPI_COMM_FREE(MPI_COMM_WW3, IERR_MPI)
      if(mpi_initialized_by_us) then
         CALL MPI_FINALIZE  ( IERR_MPI )

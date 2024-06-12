@@ -5,7 +5,7 @@
 !
 #include "w3macros.h"
 #define W3_MPMD
-#undef
+#undef W3_MPMD
 !/ ------------------------------------------------------------------- /
 !> @brief A generic shell for WAVEWATCH III, using preformatted
 !>  input fields.

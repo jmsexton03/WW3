@@ -2842,7 +2842,7 @@ print*, FLGNML, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #endif
 #ifdef W3_MPI
 #ifdef W3_MPMD
-     CALL MPI_BARRIER(MPI_COMM_WORLD, IERR_MPI)
+!     CALL MPI_BARRIER(MPI_COMM_WORLD, IERR_MPI)
      CALL MPI_COMM_FREE(MPI_COMM_WW3, IERR_MPI)
      if(mpi_initialized_by_us) then
         CALL MPI_FINALIZE  ( IERR_MPI )

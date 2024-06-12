@@ -61,10 +61,10 @@ MODULE MPICOMM
 #if 0
   INTEGER :: MPI_COMM_WW3=MPI_COMM_WORLD !< MPI_COMM_WW3
 #else
-  INTEGER :: MPI_COMM_WW3=1 !< MPI_COMM_WW3
+  INTEGER :: MPI_COMM_WW3=0 !< MPI_COMM_WW3
 #endif 
 #else
-  INTEGER :: MPI_COMM_WW3=1 !< MPI_COMM_WW3
+  INTEGER :: MPI_COMM_WW3=0 !< MPI_COMM_WW3
 #endif
   !
   ! Parameters in support of running as ESMF component

@@ -405,9 +405,9 @@ PROGRAM W3SHEL
   LOGICAL             :: FIRST_STEP = .TRUE.
 #endif
 #ifdef W3_MPMD
-  LOGICAL             :: FIRST_STEP = .TRUE.
-  integer             :: flag
-  integer             :: p, all_appnum(10), napps, all_argc(10)
+  LOGICAL             :: FIRST_STEP = .TRUE., initialized, mpi_initialized_by_us
+  integer             :: flag, myproc, nprocs, max_appnum, min_appnum
+  integer             :: p, appnum, all_appnum(10), napps, all_argc(10)
   CHARACTER(LEN=80)   :: exename
 #endif
   character(len=10)   :: jchar
@@ -510,13 +510,82 @@ PROGRAM W3SHEL
 #else
 
 #ifdef W3_MPI
-      CALL MPI_INIT      ( IERR_MPI )
-  print*, "CHANGING MPI COMM", MPI_COMM_WORLD, MPI_COMM_WW3
+  initialized = .true.
+  print*, "calling mpi_initialized"
+  CALL MPI_Initialized(flag, IERR_MPI)
+  print*, "result of initialized ~~~~~~~~~~~~~~~~~~~~~~~~",flag
+    if (flag .eq. 0) then
+        CALL MPI_Init(IERR_MPI);
+        mpi_initialized_by_us = .true.
+!     else
+!        CALL MPI_INIT      ( IERR_MPI )
+     endif
   ! CHANGE HERE
       MPI_COMM_WW3 = MPI_COMM_WORLD
+
+#ifdef W3_MPI
+  CALL MPI_COMM_SIZE ( MPI_COMM_WORLD, NPROCS, IERR_MPI )
+#endif
+#ifdef W3_MPI
+  CALL MPI_COMM_RANK ( MPI_COMM_WORLD, MYPROC, IERR_MPI )
+  MYPROC = MYPROC + 1
+#endif
+
+  CALL MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_APPNUM, p, flag, IERR_MPI)
+  appnum = p
+  print*,"sizes",NPROCS, MYPROC, p
+
+  CALL MPI_Allgather(appnum, 1, MPI_INT, all_appnum, 1, MPI_INT, MPI_COMM_WORLD, IERR_MPI)
+  min_appnum=2147483647
+  max_appnum=-2147483647
+  napps = 2
+  do i=1,10
+     min_appnum=min(all_appnum(i),min_appnum)
+     max_appnum=max(all_appnum(i),max_appnum)
+  end do
+  do i=1,10
+     if((all_appnum(i) .ne. min_appnum) .and. (all_appnum(i) .ne. max_appnum)) then
+        print*,all_appnum(i), "does not match max or min, so napp != 2", min_appnum, max_appnum
+        napps = 3
+     end if
+  end do
+
+!    // MPI_APPNUM does not appear to work with slurm on some systems.
+!    if (napps != 2) {
+!        std::vector<int> all_argc(nprocs);
+!        MPI_Allgather(&argc, 1, MPI_INT, all_argc.data(), 1, MPI_INT, MPI_COMM_WORLD);
+!        napps = num_unique_elements(all_argc);
+!        if (napps == 2) {
+!            appnum = static_cast<int>(argc != all_argc[0]);
+!        }
+!    }
+
+!    if (napps != 2) {
+!        std::string exename;
+!        if (argc > 0) {
+!            exename = std::string(argv[0]);
+!        }
+!        unsigned long long hexe = std::hash<std::string>{}(exename);
+!        std::vector<unsigned long long> all_hexe(nprocs);
+!        MPI_Allgather(&hexe, 1, MPI_UNSIGNED_LONG_LONG,
+!                      all_hexe.data(), 1, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+!        napps = num_unique_elements(all_hexe);
+!        if (napps == 2) {
+!            appnum = static_cast<int>(hexe != all_hexe[0]);
+!        }
+!    }
+
+    if (napps .ne. 2) then
+        print*, "amrex::MPMD only supports two programs."
+        CALL MPI_Abort(MPI_COMM_WORLD, 1);
+    end if
+    CALL MPI_Comm_split(MPI_COMM_WORLD, appnum, myproc, MPI_COMM_WW3, IERR_MPI)
+     print*, "CHANGING MPI COMM", MPI_COMM_WORLD, MPI_COMM_WW3
 #endif
   IS_EXTERNAL_COMPONENT = .TRUE.
   print*, "CHANGING MPI COMM"
+
+
 #ifdef W3_MPI
     MPI_COMM = MPI_COMM_WW3
 #endif

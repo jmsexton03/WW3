@@ -2114,13 +2114,17 @@ CONTAINS
         CALL MPI_Send(NSEALM, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
+
   if (MyProc-1 .eq. this_root) then
      if (rank_offset .eq. 0) then !  the first program
-        CALL MPI_Send(HS, NSEALM, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(HS, NSEALM, MPI_INT, other_root, 2, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(WLM, NSEALM, MPI_INT, other_root, 4, MPI_COMM_WORLD, IERR_MPI)
      else ! the second program
-        CALL MPI_Send(WLM, NSEALM, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(HS, NSEALM, MPI_INT, other_root, 3, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(WLM, NSEALM, MPI_INT, other_root, 5, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
+
 #else
   print*, "Not using MPI this run"
 #endif

@@ -55,9 +55,9 @@ MODULE MPICOMM
 !#ifdef W3_MPI
 !  INCLUDE "mpif.h"
 !#endif
-
+   USE MPI, ONLY: MPI_COMM_WORLD
 #ifdef W3_MPI
-#if 0
+#if 1
   INTEGER :: MPI_COMM_WW3=MPI_COMM_WORLD !< MPI_COMM_WW3
 #else
   INTEGER :: MPI_COMM_WW3=1 !< MPI_COMM_WW3

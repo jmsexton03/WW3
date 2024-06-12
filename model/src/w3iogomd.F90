@@ -2097,7 +2097,7 @@ CONTAINS
   print*, "My rank is ",MYPROC," out of ",NPROCS," total ranks in my part of MPI_COMM_WORLD communicator ",MPI_COMM_WORLD, "and my rank is ",IAPROC," out of ",NAPROC," total ranks in my part of the split communicator ", MPI_COMM_WW3
   ! Should MPMD use the MPI rank indices adjusted for fortran?
   !  print*, "My rank is ",MYPROC-1," out of ",NPROCS," total ranks in my part of MPI_COMM_WORLD communicator ",MPI_COMM_WORLD, "and my rank is ",IAPROC-1," out of ",NAPROC," total ranks in my part of the split communicator ", MPI_COMM
-  this_nboxes=10
+
   rank_offset = MyProc - IAPROC;
   if (rank_offset .eq. 0) then ! First program
      this_root = 0
@@ -2109,12 +2109,18 @@ CONTAINS
 
   if (MyProc-1 .eq. this_root) then
      if (rank_offset .eq. 0) then !  the first program
-        CALL MPI_Send(this_nboxes, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NSEALM, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
      else ! the second program
-        CALL MPI_Send(this_nboxes, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NSEALM, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
-
+  if (MyProc-1 .eq. this_root) then
+     if (rank_offset .eq. 0) then !  the first program
+        CALL MPI_Send(HS, NSEALM, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
+     else ! the second program
+        CALL MPI_Send(WLM, NSEALM, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
+     end if
+  end if
 #else
   print*, "Not using MPI this run"
 #endif

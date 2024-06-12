@@ -511,6 +511,7 @@ PROGRAM W3SHEL
 
 #ifdef W3_MPI
   initialized = .true.
+  mpi_initialized_by_us = .false.
 
   CALL MPI_Initialized(flag, IERR_MPI)
 
@@ -577,7 +578,6 @@ PROGRAM W3SHEL
         CALL MPI_Abort(MPI_COMM_WORLD, 1);
     end if
     CALL MPI_Comm_split(MPI_COMM_WORLD, appnum, myproc, MPI_COMM_WW3, IERR_MPI)
-    print*, "Splitting MPI COMM", MPI_COMM_WORLD, MPI_COMM_WW3
 #endif
   IS_EXTERNAL_COMPONENT = .TRUE.
 
@@ -594,13 +594,19 @@ PROGRAM W3SHEL
   CALL MPI_COMM_RANK ( MPI_COMM, IAPROC, IERR_MPI )
   IAPROC = IAPROC + 1
 #endif
+
 #ifdef W3_MPMD
+!  IAPROC = IAPROC - 1
+!  MYPROC = MYPROC - 1
 #ifdef W3_MPI
   print*, "My rank is ",MYPROC," out of ",NPROCS," total ranks in my part of MPI_COMM_WORLD communicator ",MPI_COMM_WORLD, "and my rank is ",IAPROC," out of ",NAPROC," total ranks in my part of the split communicator ", MPI_COMM
+  ! Should MPMD use the MPI rank indices adjusted for fortran?
+  !  print*, "My rank is ",MYPROC-1," out of ",NPROCS," total ranks in my part of MPI_COMM_WORLD communicator ",MPI_COMM_WORLD, "and my rank is ",IAPROC-1," out of ",NAPROC," total ranks in my part of the split communicator ", MPI_COMM
 #else
   print*, "Not using MPI this run"
 #endif
 #endif
+
   memunit = 740+IAPROC
   !
 #ifdef W3_NCO
@@ -665,8 +671,13 @@ PROGRAM W3SHEL
   NDSF(9)  = 20
 #endif
   !
+#if 0
+  NAPOUT = 0
+  NAPERR = 0
+#else
   NAPOUT = 1
   NAPERR = 1
+#endif
   !
 #ifdef W3_COU
   OFILE  = 'output.ww3'
@@ -1296,7 +1307,7 @@ PROGRAM W3SHEL
   END IF ! FLGNML
 
 
-
+print*, FLGNML, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
   !
   ! process old ww3_shel.inp format
   !
@@ -2830,7 +2841,17 @@ PROGRAM W3SHEL
   ELSE
 #endif
 #ifdef W3_MPI
-    CALL MPI_FINALIZE  ( IERR_MPI )
+#ifdef W3_MPMD
+     CALL MPI_BARRIER(MPI_COMM_WORLD, IERR_MPI)
+     CALL MPI_COMM_FREE(MPI_COMM_WW3, IERR_MPI)
+     if(mpi_initialized_by_us) then
+        CALL MPI_FINALIZE  ( IERR_MPI )
+        mpi_initialized_by_us = .false.
+     endif
+     initialized = .false.
+#else
+     CALL MPI_FINALIZE  ( IERR_MPI )
+#endif
 #endif
 #ifdef W3_OASIS
   END IF

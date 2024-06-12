@@ -160,6 +160,96 @@ MODULE W3IOGOMD
        IDSTR = 'WAVEWATCH III GRID OUTPUT FILE'
   !/
 CONTAINS
+    !/ ------------------------------------------------------------------- /
+
+  !> @brief Expand the seapoint array to full grid with handling of
+  !>  SMC regridding.
+  !>
+  !> @details The FLDIRN flag should be set to true for
+  !>  directional fields. In this case, they will be decomposed
+  !>  into U/V components for SMC grid interpolation and converted
+  !>  to oceanograhic convention.
+  !>
+  !> @param[inout] S Sea point array
+  !> @param[out] X Gridded array
+  !> @param[in] FLDIRN Directional field flag
+  !> @author C Bunney  @date 03-Nov-2021
+  SUBROUTINE S2GRID(S, X, FLDIRN)
+    !/
+    !/                  +-----------------------------------+
+    !/                  |           C . Bunney              |
+    !/                  |                        FORTRAN 90 |
+    !/                  | Last update :         03-Nov-2020 |
+    !/                  +-----------------------------------+
+    !/
+    !/    03-Nov-2020 : Creation                            ( version 7.13 )
+    !/
+    !  1. Purpose :
+    !
+    !     Exapand the seapoint array to full grid with handling of
+    !     SMC regridding. The FLDIRN flag should be set to true for
+    !     directional fields. In this case, they will be decomposed
+    !     into U/V components for SMC grid interpolation and converted
+    !     to oceanograhic convention.
+    !
+    !  2. Parameters :
+    !
+    !     Parameter list
+    !     ----------------------------------------------------------------
+    !       S       Real. I  Sea point array
+    !       X       Real. O  Gridded array
+    !       FLDIRN  Bool. I  Directional field flag
+    !     ----------------------------------------------------------------
+    !
+    !/ ------------------------------------------------------------------- /
+    USE W3SERVMD, ONLY : W3S2XY
+    USE W3GDATMD, ONLY : NK, UNGTYPE, MAPSF, NTRI, CLGTYPE, RLGTYPE, &
+         XGRD, YGRD, SX, SY, X0, Y0, TRIGP, USSP_WN, &
+         NX, NY, NSEA, NBEDGE, EDGES
+#ifdef W3_SMC
+  USE W3SMCOMD, SMCNOVAL=>NOVAL
+#endif
+    USE CONSTANTS, ONLY: RADE, UNDEF
+
+    IMPLICIT NONE
+
+    REAL, INTENT(INOUT)  :: S(:)
+    REAL, INTENT(OUT) :: X(:,:)
+    LOGICAL, OPTIONAL, INTENT(IN) :: FLDIRN
+
+    LOGICAL :: FLDR
+    INTEGER :: ISEA
+    REAL                    :: NOVAL      ! Fill value for seapoints with no value
+    NOVAL = UNDEF
+
+    FLDR = .FALSE.
+    IF(PRESENT(FLDIRN)) FLDR = FLDIRN
+
+#ifdef W3_SMC
+    IF( SMCGRD ) THEN
+      CALL W3S2XY_SMC( S, X, FLDR )
+    ELSE ! IF(SMCGRD)
+#endif
+      IF(FLDR) THEN
+        DO ISEA=1, NSEA
+          IF (S(ISEA) .NE. UNDEF )  THEN
+            S(ISEA) = MOD ( 630. - RADE * S(ISEA) , 360. )
+          END IF
+        END DO
+      ENDIF
+
+      ! Change UNDEF sea points to NOVAL, if set differently
+      IF(NOVAL .NE. UNDEF) WHERE(S .EQ. UNDEF) S = NOVAL
+
+      CALL W3S2XY ( NSEA, NSEA, NX+1, NY, S, MAPSF, X )
+#ifdef W3_SMC
+    ENDIF
+#endif
+
+  END SUBROUTINE S2GRID
+
+
+
   !/ ------------------------------------------------------------------- /
   !>
   !> @brief Updates the flags for output parameters based on the mod_def file
@@ -1338,6 +1428,7 @@ CONTAINS
   integer             :: flag, myproc, nprocs, max_appnum, min_appnum, this_root, other_root, rank_offset, this_nboxes
   integer             :: p, appnum, all_appnum(10), napps, all_argc(10), IERR_MPI
   CHARACTER(LEN=80)   :: exename
+  REAL, ALLOCATABLE       :: X1(:,:)
 #endif
     !/
     !/ ------------------------------------------------------------------- /
@@ -2085,6 +2176,7 @@ CONTAINS
     ! MY EDITS
 
 #ifdef W3_MPMD
+
 #ifdef W3_MPI
   CALL MPI_COMM_SIZE ( MPI_COMM_WORLD, NPROCS, IERR_MPI )
 #endif
@@ -2106,25 +2198,36 @@ CONTAINS
      this_root = rank_offset
      other_root = 0
   end if
-
+  
+  ALLOCATE(X1(NX+1,NY))
   if (MyProc-1 .eq. this_root) then
      if (rank_offset .eq. 0) then !  the first program
-        CALL MPI_Send(NSEALM, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NX, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NY, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
      else ! the second program
-        CALL MPI_Send(NSEALM, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NX, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NY, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
 
   if (MyProc-1 .eq. this_root) then
      if (rank_offset .eq. 0) then !  the first program
-        CALL MPI_Send(HS, NSEALM, MPI_INT, other_root, 2, MPI_COMM_WORLD, IERR_MPI)
-        CALL MPI_Send(WLM, NSEALM, MPI_INT, other_root, 4, MPI_COMM_WORLD, IERR_MPI)
+        X1     = UNDEF
+        CALL S2GRID(HS, X1)
+        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 2, MPI_COMM_WORLD, IERR_MPI)
+        X1     = UNDEF
+        CALL S2GRID(WLM, X1)
+        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 4, MPI_COMM_WORLD, IERR_MPI)
      else ! the second program
-        CALL MPI_Send(HS, NSEALM, MPI_INT, other_root, 3, MPI_COMM_WORLD, IERR_MPI)
-        CALL MPI_Send(WLM, NSEALM, MPI_INT, other_root, 5, MPI_COMM_WORLD, IERR_MPI)
+        X1     = UNDEF
+        CALL S2GRID(HS, X1)
+        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 3, MPI_COMM_WORLD, IERR_MPI)
+        X1     = UNDEF
+        CALL S2GRID(WLM, X1)
+        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 5, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
-
+  DEALLOCATE(X1)
 #else
   print*, "Not using MPI this run"
 #endif

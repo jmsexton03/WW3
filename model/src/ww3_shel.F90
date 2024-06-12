@@ -511,16 +511,14 @@ PROGRAM W3SHEL
 
 #ifdef W3_MPI
   initialized = .true.
-  print*, "calling mpi_initialized"
+
   CALL MPI_Initialized(flag, IERR_MPI)
-  print*, "result of initialized ~~~~~~~~~~~~~~~~~~~~~~~~",flag
+
     if (flag .eq. 0) then
         CALL MPI_Init(IERR_MPI);
         mpi_initialized_by_us = .true.
-!     else
-!        CALL MPI_INIT      ( IERR_MPI )
      endif
-  ! CHANGE HERE
+
       MPI_COMM_WW3 = MPI_COMM_WORLD
 
 #ifdef W3_MPI
@@ -533,7 +531,6 @@ PROGRAM W3SHEL
 
   CALL MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_APPNUM, p, flag, IERR_MPI)
   appnum = p
-  print*,"sizes",NPROCS, MYPROC, p
 
   CALL MPI_Allgather(appnum, 1, MPI_INT, all_appnum, 1, MPI_INT, MPI_COMM_WORLD, IERR_MPI)
   min_appnum=2147483647
@@ -580,11 +577,9 @@ PROGRAM W3SHEL
         CALL MPI_Abort(MPI_COMM_WORLD, 1);
     end if
     CALL MPI_Comm_split(MPI_COMM_WORLD, appnum, myproc, MPI_COMM_WW3, IERR_MPI)
-     print*, "CHANGING MPI COMM", MPI_COMM_WORLD, MPI_COMM_WW3
+    print*, "Splitting MPI COMM", MPI_COMM_WORLD, MPI_COMM_WW3
 #endif
   IS_EXTERNAL_COMPONENT = .TRUE.
-  print*, "CHANGING MPI COMM"
-
 
 #ifdef W3_MPI
     MPI_COMM = MPI_COMM_WW3
@@ -598,6 +593,13 @@ PROGRAM W3SHEL
 #ifdef W3_MPI
   CALL MPI_COMM_RANK ( MPI_COMM, IAPROC, IERR_MPI )
   IAPROC = IAPROC + 1
+#endif
+#ifdef W3_MPMD
+#ifdef W3_MPI
+  print*, "My rank is ",MYPROC," out of ",NPROCS," total ranks in my part of MPI_COMM_WORLD communicator ",MPI_COMM_WORLD, "and my rank is ",IAPROC," out of ",NAPROC," total ranks in my part of the split communicator ", MPI_COMM
+#else
+  print*, "Not using MPI this run"
+#endif
 #endif
   memunit = 740+IAPROC
   !

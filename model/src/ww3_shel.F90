@@ -5,7 +5,7 @@
 !
 #include "w3macros.h"
 #define W3_MPMD
-#undef W3_MPMD
+!#undef W3_MPMD
 !/ ------------------------------------------------------------------- /
 !> @brief A generic shell for WAVEWATCH III, using preformatted
 !>  input fields.
@@ -602,6 +602,7 @@ PROGRAM W3SHEL
   print*, "My rank is ",MYPROC," out of ",NPROCS," total ranks in my part of MPI_COMM_WORLD communicator ",MPI_COMM_WORLD, "and my rank is ",IAPROC," out of ",NAPROC," total ranks in my part of the split communicator ", MPI_COMM
   ! Should MPMD use the MPI rank indices adjusted for fortran?
   !  print*, "My rank is ",MYPROC-1," out of ",NPROCS," total ranks in my part of MPI_COMM_WORLD communicator ",MPI_COMM_WORLD, "and my rank is ",IAPROC-1," out of ",NAPROC," total ranks in my part of the split communicator ", MPI_COMM
+#if 0
   this_nboxes=10
   rank_offset = MyProc - IAPROC;
   if (rank_offset .eq. 0) then ! First program
@@ -619,7 +620,7 @@ PROGRAM W3SHEL
         CALL MPI_Send(this_nboxes, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
-
+#endif
 #else
   print*, "Not using MPI this run"
 #endif

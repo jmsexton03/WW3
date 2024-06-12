@@ -505,11 +505,15 @@ PROGRAM W3SHEL
   END IF
 #endif
 #else
-  
+
+#ifdef W3_MPI
+      CALL MPI_INIT      ( IERR_MPI )
+#endif
   IS_EXTERNAL_COMPONENT = .TRUE.
   print*, "CHANGING MPI COMM"
+  print*, "CHANGING MPI COMM", MPI_COMM_WORLD, MPI_COMM_WW3
   ! CHANGE HERE
-!!  MPI_COMM_WW3 = 5
+  !  MPI_COMM_WW3 = MPI_COMM_WORLD
 #ifdef W3_MPI
     MPI_COMM = MPI_COMM_WW3
 #endif

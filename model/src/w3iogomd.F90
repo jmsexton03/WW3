@@ -1407,8 +1407,16 @@ CONTAINS
     USE W3SERVMD, ONLY: STRACE
 #endif
     !
-    USE W3PARALL, ONLY : INIT_GET_ISEA
+    USE W3PARALL, ONLY : INIT_GET_ISEA, SYNCHRONIZE_GLOBAL_ARRAY
     USE MPICOMM
+#ifdef W3_PDLIB
+    USE W3ODATMD, only : IAPROC, NAPROC, NTPROC
+    USE W3ADATMD, ONLY: MPI_COMM_WCMP
+    use yowDatapool, only: rtype, istatus
+    USE yowNodepool, only: npa
+    use yowNodepool, only: iplg
+    use yowDatapool, only: rkind
+#endif
     IMPLICIT NONE
 #ifdef W3_MPI
   INCLUDE "mpif.h"
@@ -1429,7 +1437,13 @@ CONTAINS
   integer             :: p, appnum, all_appnum(10), napps, all_argc(10), IERR_MPI
   CHARACTER(LEN=80)   :: exename
   REAL, ALLOCATABLE       :: X1(:,:)
-  REAL                :: XY_SEND(NX*NY)
+#ifdef W3_PDLIB
+  REAL(rkind)         :: XY_SEND(NX*NY)
+  REAL(rkind)         :: XY_SYNCH_SEND(NSEA)
+#else
+  DOUBLE PRECISION    :: XY_SEND(NX*NY)
+  DOUBLE PRECISION    :: XY_SYNCH_SEND(NSEA)
+#endif
 #endif
     !/
     !/ ------------------------------------------------------------------- /
@@ -2222,40 +2236,45 @@ CONTAINS
 !           END DO
 !        END DO
         CALL S2GRID(HS, X1)
+        XY_SYNCH_SEND = HS
+        CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
         DO JSEA=1, NSEAL
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)
-           XY_SEND((IX)+(IY-1)*NX)=HS(ISEA)
+           XY_SEND((IX)+(IY-1)*NX)=XY_SYNCH_SEND(ISEA)
         END DO
         CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 2, MPI_COMM_WORLD, IERR_MPI)
         X1     = UNDEF
-        CALL S2GRID(WLM, X1)
+        XY_SYNCH_SEND = WLM
+        CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
         DO JSEA=1, NSEAL
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)
-           XY_SEND((IX)+(IY-1)*NX)=WLM(ISEA)
+           XY_SEND((IX)+(IY-1)*NX)=XY_SYNCH_SEND(ISEA)
         END DO
         CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 4, MPI_COMM_WORLD, IERR_MPI)
      else ! the second program
         X1     = UNDEF
         XY_SEND     = UNDEF
-        CALL S2GRID(HS, X1)
+        XY_SYNCH_SEND = HS
+        CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
         DO JSEA=1, NSEAL
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)
-           XY_SEND((IX)+(IY-1)*NX)=HS(ISEA)
+           XY_SEND((IX)+(IY-1)*NX)=XY_SYNCH_SEND(ISEA)
         END DO
         CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 3, MPI_COMM_WORLD, IERR_MPI)
         X1     = UNDEF
-        CALL S2GRID(WLM, X1)
+        XY_SYNCH_SEND = WLM
+        CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
         DO JSEA=1, NSEAL
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)
-           XY_SEND((IX)+(IY-1)*NX)=WLM(ISEA)
+           XY_SEND((IX)+(IY-1)*NX)=XY_SYNCH_SEND(ISEA)
         END DO
         CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 5, MPI_COMM_WORLD, IERR_MPI)
      end if

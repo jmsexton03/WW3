@@ -2238,7 +2238,7 @@ CONTAINS
         CALL S2GRID(HS, X1)
         XY_SYNCH_SEND = HS
         CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
-        DO JSEA=1, NSEAL
+        DO JSEA=1, NSEA
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)
@@ -2248,7 +2248,7 @@ CONTAINS
         X1     = UNDEF
         XY_SYNCH_SEND = WLM
         CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
-        DO JSEA=1, NSEAL
+        DO JSEA=1, NSEA
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)
@@ -2260,7 +2260,7 @@ CONTAINS
         XY_SEND     = UNDEF
         XY_SYNCH_SEND = HS
         CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
-        DO JSEA=1, NSEAL
+        DO JSEA=1, NSEA
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)
@@ -2270,7 +2270,7 @@ CONTAINS
         X1     = UNDEF
         XY_SYNCH_SEND = WLM
         CALL SYNCHRONIZE_GLOBAL_ARRAY(XY_SYNCH_SEND)
-        DO JSEA=1, NSEAL
+        DO JSEA=1, NSEA
            CALL INIT_GET_ISEA(ISEA, JSEA)
            IX     = MAPSF(ISEA,1)
            IY     = MAPSF(ISEA,2)

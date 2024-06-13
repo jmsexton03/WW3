@@ -1429,6 +1429,7 @@ CONTAINS
   integer             :: p, appnum, all_appnum(10), napps, all_argc(10), IERR_MPI
   CHARACTER(LEN=80)   :: exename
   REAL, ALLOCATABLE       :: X1(:,:)
+  REAL                :: XY_SEND(NX*NY)
 #endif
     !/
     !/ ------------------------------------------------------------------- /
@@ -2200,34 +2201,67 @@ CONTAINS
   end if
   
   ALLOCATE(X1(NX+1,NY))
+!  ALLOCATE(XY_SEND(NX*NY))
   if (MyProc-1 .eq. this_root) then
      if (rank_offset .eq. 0) then !  the first program
         CALL MPI_Send(NX, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
-        CALL MPI_Send(NY, 1, MPI_INT, other_root, 0, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NY, 1, MPI_INT, other_root, 6, MPI_COMM_WORLD, IERR_MPI)
      else ! the second program
         CALL MPI_Send(NX, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
-        CALL MPI_Send(NY, 1, MPI_INT, other_root, 1, MPI_COMM_WORLD, IERR_MPI)
+        CALL MPI_Send(NY, 1, MPI_INT, other_root, 7, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
 
   if (MyProc-1 .eq. this_root) then
      if (rank_offset .eq. 0) then !  the first program
         X1     = UNDEF
+        XY_SEND     = UNDEF
+!        DO IX=1,NX
+!           DO IY=1,NY
+!              XY_SEND((IX)+(IY-1)*NX)=0.0
+!           END DO
+!        END DO
         CALL S2GRID(HS, X1)
-        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 2, MPI_COMM_WORLD, IERR_MPI)
+        DO JSEA=1, NSEAL
+           CALL INIT_GET_ISEA(ISEA, JSEA)
+           IX     = MAPSF(ISEA,1)
+           IY     = MAPSF(ISEA,2)
+           XY_SEND((IX)+(IY-1)*NX)=HS(ISEA)
+        END DO
+        CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 2, MPI_COMM_WORLD, IERR_MPI)
         X1     = UNDEF
         CALL S2GRID(WLM, X1)
-        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 4, MPI_COMM_WORLD, IERR_MPI)
+        DO JSEA=1, NSEAL
+           CALL INIT_GET_ISEA(ISEA, JSEA)
+           IX     = MAPSF(ISEA,1)
+           IY     = MAPSF(ISEA,2)
+           XY_SEND((IX)+(IY-1)*NX)=WLM(ISEA)
+        END DO
+        CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 4, MPI_COMM_WORLD, IERR_MPI)
      else ! the second program
         X1     = UNDEF
+        XY_SEND     = UNDEF
         CALL S2GRID(HS, X1)
-        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 3, MPI_COMM_WORLD, IERR_MPI)
+        DO JSEA=1, NSEAL
+           CALL INIT_GET_ISEA(ISEA, JSEA)
+           IX     = MAPSF(ISEA,1)
+           IY     = MAPSF(ISEA,2)
+           XY_SEND((IX)+(IY-1)*NX)=HS(ISEA)
+        END DO
+        CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 3, MPI_COMM_WORLD, IERR_MPI)
         X1     = UNDEF
         CALL S2GRID(WLM, X1)
-        CALL MPI_Send(X1, NSEALM, MPI_INT, other_root, 5, MPI_COMM_WORLD, IERR_MPI)
+        DO JSEA=1, NSEAL
+           CALL INIT_GET_ISEA(ISEA, JSEA)
+           IX     = MAPSF(ISEA,1)
+           IY     = MAPSF(ISEA,2)
+           XY_SEND((IX)+(IY-1)*NX)=WLM(ISEA)
+        END DO
+        CALL MPI_Send(XY_SEND, NX*NY, MPI_DOUBLE, other_root, 5, MPI_COMM_WORLD, IERR_MPI)
      end if
   end if
   DEALLOCATE(X1)
+!  DEALLOCATE(XY_SEND)
 #else
   print*, "Not using MPI this run"
 #endif

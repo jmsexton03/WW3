@@ -37,7 +37,11 @@
 !
 !> Has fancy data
 module yowDatapool
-  use MPI, only: MPI_COMM_WORLD, MPI_INTEGER, MPI_REAL4, MPI_REAL8, MPI_STATUS_SIZE
+  use MPI, only: MPI_INTEGER, MPI_REAL4, MPI_REAL8, MPI_STATUS_SIZE
+#ifdef W3_MPI
+  USE MPICOMM, only: MPI_COMM_WW3 => MPI_COMM_WORLD
+#endif
+  !
   implicit none
   !#ifdef USE_SINGLE
   !  !> single precision. Enable with compiler flag -DUSE_SINGLE

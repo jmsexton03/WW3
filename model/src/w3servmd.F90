@@ -79,10 +79,6 @@ MODULE W3SERVMD
   !/ ------------------------------------------------------------------- /
 
   ! module default
-#ifdef W3_MPI
-  USE MPICOMM
-#endif
-  !
   implicit none
 
   PUBLIC
@@ -868,7 +864,7 @@ CONTAINS
         IF (PRESENT(COMM)) THEN
           WRITE(*,'(/A,I6/)') 'EXTCDE COMM=', COMM
         END IF
-        CALL MPI_ABORT ( MPI_COMM_WW3, IEXIT, IERR_MPI )
+        CALL MPI_ABORT ( MPI_COMM_WORLD, IEXIT, IERR_MPI )
       END IF
     END IF
 #endif

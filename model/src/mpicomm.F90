@@ -8,7 +8,7 @@
 !>
 !> @brief Define some mpi constants for global use
 !>
-!> @author  H. L. Tolman  @date 05-Jun-2018
+!> @author  J. M. Sexton  @date 19-Jul-2024
 !>
 !
 #ifndef ENDIANNESS
@@ -22,19 +22,12 @@ MODULE MPICOMM
   !/                  | WAVEWATCH III           NOAA/NCEP |
   !/                  |           H. L. Tolman            |
   !/                  |                        FORTRAN 90 |
-  !/                  | Last update :         05-Jun-2018 |
+  !/                  | Last update :         19-Jul-2024 |
   !/                  +-----------------------------------+
   !/
-  !/    11-Nov-1999 : Fortran 90 version.                 ( version 2.00 )
-  !/    29-May-2009 : Preparing distribution version.     ( version 3.14 )
-  !/    25-Jun-2011 : Adding Kelvin functions.            ( version 4.05 )
-  !/    03-Sep-2012 : Adding TSTOUT flag.                 ( version 4.10 )
-  !/    28-Feb-2013 : Adding cap at 0.5 in FWTABLE        ( version 4.08 )
-  !/    20-Jan-2017 : Add parameters for ESMF             ( version 6.02 )
-  !/    01-Mar-2018 : Add UNDEF parameter                 ( version 6.02 )
-  !/    05-Jun-2018 : Add PDLIB parameters                ( version 6.04 )
+  !/    19-Jul-2024 : Add MPI SubCommunicator variable    ( version 7.xx )
   !/
-  !/    Copyright 2009-2012 National Weather Service (NWS),
+  !/    Copyright 2009-2024 National Weather Service (NWS),
   !/       National Oceanic and Atmospheric Administration.  All rights
   !/       reserved.  WAVEWATCH III is a trademark of the NWS.
   !/       No unauthorized use without permission.
@@ -45,9 +38,10 @@ MODULE MPICOMM
   !
   !  2. Variables and types :
   !
-  !      Name      Type  Scope    Description
+  !      Name                     Type  Scope    Description
   !     ----------------------------------------------------------------
-  !      UNDEF     Real  Global   Value for undefined variable in output
+  !      MPI_COMM_WW3             Int   Global   Value for mpi (sub)communicator for WW3
+  !      IS_EXTERNAL_COMPONENT    Bool  Global   General logical similar to IS_ESMF_COMPONENT
   !     ----------------------------------------------------------------
   !/ ------------------------------------------------------------------- /
   !/

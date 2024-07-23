@@ -11,9 +11,6 @@
 !> @author  J. M. Sexton  @date 19-Jul-2024
 !>
 !
-#ifndef ENDIANNESS
-#define ENDIANNESS "native"
-#endif
 !
 !/ ------------------------------------------------------------------- /
 MODULE MPICOMM
@@ -46,9 +43,6 @@ MODULE MPICOMM
   !/ ------------------------------------------------------------------- /
   !/
   !
-!#ifdef W3_MPI
-!  INCLUDE "mpif.h"
-!#endif
 
   INTEGER :: MPI_COMM_WW3=0 !< MPI_COMM_WW3
   !
